@@ -26,6 +26,15 @@ async function GetAllJob(req, res) {
   }
 }
 
+async function FetchJob(req, res){
+  try{
+    const jobs = await jobService.fetchJob();
+    return res.status(200).json({jobs: jobs});
+  }catch(error){
+    return res.status(500).json({ message: error.message});
+  }
+}
+
 async function GetJobById(req, res) {
   try {
     const { id } = req.params;
@@ -33,7 +42,7 @@ async function GetJobById(req, res) {
     const job = await jobService.getJobById(id);
 
     if (!id) {
-      return res.statsu(404).json({ message: "Job not Found" });
+      return res.status(404).json({ message: "Job not Found" });
     }
 
     return res.status(200).json({ job: job });
@@ -69,4 +78,4 @@ async function DeletedJob(req, res) {
   }
 }
 
-module.exports = { CreatedJob, GetAllJob, GetJobById, UpdatedJob, DeletedJob };
+module.exports = { CreatedJob, GetAllJob,FetchJob, GetJobById, UpdatedJob, DeletedJob };

@@ -2,7 +2,7 @@ const jobModel = require("../models/job.model");
 const mongoose = require("mongoose");
 
 async function createJob(jobData, userId) {
-  const { job_title, job_desc, contact, pay_per_day, number_of_persons } =
+  const { job_title, job_desc,location, contact, pay_per_day, number_of_persons } =
     jobData;
 
   if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -12,6 +12,7 @@ async function createJob(jobData, userId) {
   const newJob = new jobModel({
     job_title,
     job_desc,
+    location,
     created_By: userId,
     contact,
     number_of_persons,
@@ -28,6 +29,12 @@ async function getAllJob(userId) {
   return job;
 }
 
+async function fetchJob() {
+  const query = { deleted: false };
+  const job = await jobModel.find(query).populate("created_By", "fullname");
+  return job;
+}
+
 async function getJobById(id) {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid job ID");
@@ -35,17 +42,28 @@ async function getJobById(id) {
   const job = await jobModel.findById(id).populate("created_By", "fullname");
   return job;
 }
+
+async function getJobById(id){
+  if(!mongoose.Types.ObjectId.isValid(id)){
+    throw new Error("Invalid Job Id");
+  }
+  const job = await jobModel.findById(id).populate("created_By", "fullname");
+  return job;
+}
+
 async function updatedJob(jobData, id) {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid job ID");
   }
-  const { job_title, job_desc, contact,number_of_persons, pay_per_day } = jobData;
+  const { job_title, job_desc,location, contact, number_of_persons, pay_per_day } =
+    jobData;
 
   const updatedJob = await jobModel.findByIdAndUpdate(
     id,
     {
       job_title,
       job_desc,
+      location,
       contact,
       number_of_persons,
       pay_per_day,
@@ -77,6 +95,7 @@ async function deletedJob(id) {
 module.exports = {
   createJob,
   getAllJob,
+  fetchJob,
   getJobById,
   updatedJob,
   deletedJob,

@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const User = require('./user.model');
+const mongoose = require("mongoose");
+const User = require("./user.model");
 
 const jobSchema = mongoose.Schema(
   {
@@ -8,6 +8,10 @@ const jobSchema = mongoose.Schema(
       required: true,
     },
     job_desc: {
+      type: String,
+      required: true,
+    },
+    location: {
       type: String,
       required: true,
     },
