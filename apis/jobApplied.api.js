@@ -2,7 +2,7 @@ const jobAppliedService = require("../services/jobApplied.service");
 
 async function ApplyJob(req, res) {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id;    
     const { jobId } = req.params;
 
     const result = await jobAppliedService.applyJob(userId, jobId);
@@ -18,7 +18,7 @@ async function GetUserApplication(req, res) {
     const userId = req.user.id;
     const result = await jobAppliedService.getUserApplication(userId);
 
-    res.status(200).json({ result });
+    res.status(200).json({ jobs: result });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

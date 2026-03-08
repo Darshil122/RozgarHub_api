@@ -17,7 +17,13 @@ async function applyJob(userId, jobId){
 }
 
 async function getUserApplication(userId){
-    return await JobApplied.find({userId}).populate("jobId");
+const job = await JobApplied.find({ userId }).populate({
+  path: "jobId",
+  populate: {
+    path: "created_By",
+    select: "fullname",
+  },
+});    return job;
 }
 
 

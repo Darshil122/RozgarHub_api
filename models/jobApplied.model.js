@@ -15,9 +15,7 @@ const jobAppliedSchema = mongoose.Schema(
       required: true,
     },
   },
-  {
-    timeStamps: true,
-  },
+  { timestamps: true },
 );
 
 const JobApplied = mongoose.model("JobApplied", jobAppliedSchema);
