@@ -24,8 +24,19 @@ async function GetUserApplication(req, res) {
   }
 }
 
+// async function GetContractorApplication(req, res){
+//   try{
+//     const contractorId = req.user.id;
+//     const result = await jobAppliedService.getContractorApplication(contractorId);
+//     res.status(200).json({jobs: result});
+//   }catch(error){
+//     res.status(500).json({message: error.message});
+//   }
+// }
+
 
 module.exports = {
   ApplyJob,
   GetUserApplication,
+  // GetContractorApplication
 };
