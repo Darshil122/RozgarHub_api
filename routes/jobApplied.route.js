@@ -5,5 +5,6 @@ const { ApplyJob, GetUserApplication } = require('../apis/jobApplied.api');
 
 router.post("/:jobId", permit("worker"), ApplyJob);
 router.get("/", permit("worker"), GetUserApplication);
+// router.get("/jobs", permit("contractor"), GetContractorApplication);
 
 module.exports = router;
