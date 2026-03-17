@@ -24,19 +24,31 @@ async function GetUserApplication(req, res) {
   }
 }
 
-// async function GetContractorApplication(req, res){
-//   try{
-//     const contractorId = req.user.id;
-//     const result = await jobAppliedService.getContractorApplication(contractorId);
-//     res.status(200).json({jobs: result});
-//   }catch(error){
-//     res.status(500).json({message: error.message});
-//   }
-// }
+async function GetJobApplication(req, res){
+  try{
+    const jobId = req.params.id;
+    const result = await jobAppliedService.getJobApplication(jobId);
+    res.status(200).json({jobs: result});
+  }catch(error){
+    res.status(500).json({message: error.message});
+  }
+}
+
+async function UpdateApplicationStatus(req, res){
+  try{
+    const applicationId = req.params.id;
+    const {status} = req.body;
+    const result = await jobAppliedService.updateApplicationStatus(applicationId, status);
+    res.status(200).json({message: "Job application status updated", app: result});
+  }catch(error){
+    res.status(500).json({message: error.message});
+  }
+}
 
 
 module.exports = {
   ApplyJob,
   GetUserApplication,
-  // GetContractorApplication
+  GetJobApplication,
+  UpdateApplicationStatus,
 };

@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const User = require("./user.model");
 
 const jobSchema = mongoose.Schema(
   {
@@ -17,11 +16,7 @@ const jobSchema = mongoose.Schema(
     },
     created_By: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: User,
-      required: true,
-    },
-    contact: {
-      type: String,
+      ref: "User",
       required: true,
     },
     number_of_persons: {
@@ -30,6 +25,14 @@ const jobSchema = mongoose.Schema(
     },
     pay_per_day: {
       type: String,
+      required: true,
+    },
+    job_closing_date: {
+      type: Date,
+      required: true,
+    },
+    worker_required_date: {
+      type: Date,
       required: true,
     },
     deleted: {
