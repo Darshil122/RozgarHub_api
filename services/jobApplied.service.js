@@ -1,5 +1,5 @@
 const JobApplied = require("../models/jobApplied.model");
-const mognoose = require("mongoose");
+const mongoose = require("mongoose");
 
 async function applyJob(userId, jobId) {
   const alreadyApplied = await JobApplied.findOne({ userId, jobId });
@@ -21,19 +21,39 @@ async function getUserApplication(userId) {
     path: "jobId",
     populate: {
       path: "created_By",
-      select: "fullname",
+      select: "fullname contact",
     },
   });
   return job;
 }
 
-// async function getContractorApplication(contractorId){
-//   const application = await JobApplied.find()
-  
-// }
+async function getJobApplication(jobId){
+  if(!mongoose.Types.ObjectId.isValid(jobId)){
+    throw new Error("Invalid Job Id");
+  }
+
+  const application = await JobApplied.find({jobId})
+  .populate("userId", "fullname contact email")
+  .populate("jobId", "job_title");
+
+  return application;
+}
+
+async function updateApplicationStatus(applicationId, status){
+  const application = await JobApplied.findById(applicationId);
+
+  if(!application){
+    throw new Error("Job Application not found");
+  }
+
+  application.status = status;
+  await application.save();
+  return application;
+}
 
 module.exports = {
   applyJob,
   getUserApplication,
-  // getContractorApplication,
+  getJobApplication,
+  updateApplicationStatus,
 };
