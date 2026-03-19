@@ -19,6 +19,7 @@ app.use("/api/user", require("./routes/user.routes.js"));
 app.use(authentication);
 app.use("/api/job", require("./routes/job.route.js"));
 app.use("/api/jobApplied", require("./routes/jobApplied.route.js"));
+app.use("/api/notification", require("./routes/notification.route.js"));
 
 
 app.listen(PORT, () => console.log("Server Started!"));
