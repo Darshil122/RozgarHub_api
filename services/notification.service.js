@@ -1,4 +1,5 @@
 const Notification = require("../models/notification.model");
+const redis = require("../config/redis");
 const mongoose = require("mongoose");
 
 async function workerNotification(
@@ -21,6 +22,7 @@ async function workerNotification(
   });
 
   await notification.save();
+  await redis.del(`notifications:${contractorId}`);
   return notification;
 }
 
@@ -45,6 +47,7 @@ async function contractorNotification({
   });
 
   await notification.save();
+  await redis.del(`notifications:${receiverId}`);
   return notification;
 }
 
@@ -52,6 +55,14 @@ async function getNotifications(userId) {
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     throw new Error("invalid user id");
   }
+
+  const cacheKey = `notifications:${userId}`;
+  const cachedData = await redis.get(cacheKey);
+  
+  if (cachedData) {
+    return JSON.parse(cachedData);
+  }
+
   const notification = await Notification.find({
     receiverId: userId,
   })
@@ -59,11 +70,12 @@ async function getNotifications(userId) {
     .populate("senderId", "fullname")
     .populate("receiverId", "fullname");
 
+    await redis.set(cacheKey, JSON.stringify(notification), "EX", 30);
   return notification;
 }
 
 async function markAsRead(id) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid ID");
   }
   const notification = await Notification.findByIdAndUpdate(
@@ -71,6 +83,7 @@ async function markAsRead(id) {
     { isRead: true },
     { new: true },
   );
+  await redis.del(`notifications:${notification.id}`);
   return notification;
 }
 
@@ -82,6 +95,7 @@ async function markAllAsRead(userId) {
     { receiverId: userId, isRead: false },
     { isRead: true },
   );
+  await redis.del(`notifications:${userId}`);
   return notification;
 }
 

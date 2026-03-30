@@ -1,5 +1,6 @@
 const jobModel = require("../models/job.model");
 const mongoose = require("mongoose");
+const redis = require("../config/redis");
 
 async function createJob(jobData, userId) {
   const {
@@ -32,20 +33,36 @@ async function createJob(jobData, userId) {
   });
 
   await newJob.save();
+  await redis.del("all_jobs");
+  await redis.del(`user_jobs:${userId}`);
   return newJob;
 }
 
 async function getAllJob(userId) {
+  const cacheKey = `user_jobs:${userId}`;
+  const cachedJobs = await redis.get(cacheKey);
+  if(cachedJobs){
+    return JSON.parse(cachedJobs);
+  } 
   const query = { deleted: false, created_By: userId };
 
   const jobs = await jobModel
     .find(query)
     .populate("created_By", "fullname contact");
 
+    await redis.set(cacheKey, JSON.stringify(jobs), "EX", 60);
+
   return jobs;
 }
 
 async function fetchJob() {
+  const cacheKey = "all_jobs";
+
+  const cachedJobs = await redis.get(cacheKey);
+  if(cachedJobs){
+    console.log("Jobs from Redis");
+    return JSON.parse(cachedJobs);
+  }
   const query = {
     deleted: false,
     job_closing_date: { $gte: new Date() },
@@ -55,6 +72,8 @@ async function fetchJob() {
     .find(query)
     .populate("created_By", "fullname contact");
 
+  await redis.set(cacheKey, JSON.stringify(jobs), "EX", 60);
+  console.log("Jobs from MONGO");
   return jobs;
 }
 
@@ -118,6 +137,8 @@ async function updatedJob(jobData, id) {
     },
     { new: true, runValidators: true },
   );
+  await redis.del("all_jobs");
+  await redis.del(`user_jobs:${created_By}`);
 
   return updatedJob;
 }
@@ -142,7 +163,8 @@ async function deletedJob(id) {
 
   job.deleted = true;
   await job.save();
-
+  await redis.del("all_jobs");
+  await redis.del(`user_jobs:${created_By}`);
   return true;
 }
 
