@@ -1,5 +1,5 @@
 const Redis = require("ioredis");
-const dotenv = require('dotenv');
+const dotenv = require("dotenv");
 dotenv.config();
 
 const redis = new Redis({
@@ -7,10 +7,12 @@ const redis = new Redis({
   port: process.env.REDIS_PORT,
   password: process.env.REDIS_PASSWORD,
   maxRetriesPerRequest: null,
+  reconnectOnError: (err) => true,
 });
-
 
 redis.on("connect", () => console.log("Redis Connected"));
 redis.on("error", (err) => console.log("Redis Error:", err));
+redis.on("close", () => console.log("Redis connection closed"));
+redis.on("reconnecting", () => console.log("Reconnecting to Redis..."));
 
 module.exports = redis;
