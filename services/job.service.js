@@ -60,7 +60,6 @@ async function fetchJob() {
 
   const cachedJobs = await redis.get(cacheKey);
   if(cachedJobs){
-    console.log("Jobs from Redis");
     return JSON.parse(cachedJobs);
   }
   const query = {
@@ -73,7 +72,6 @@ async function fetchJob() {
     .populate("created_By", "fullname contact");
 
   await redis.set(cacheKey, JSON.stringify(jobs), "EX", 60);
-  console.log("Jobs from MONGO");
   return jobs;
 }
 
