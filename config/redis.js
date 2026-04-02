@@ -9,6 +9,8 @@ const redis = new Redis({
   maxRetriesPerRequest: null,
   reconnectOnError: (err) => true,
 });
+console.log("Redis Host:", process.env.REDIS_HOST);
+console.log("Redis Port:", process.env.REDIS_PORT);
 
 redis.on("connect", () => console.log("Redis Connected"));
 redis.on("error", (err) => console.log("Redis Error:", err));
