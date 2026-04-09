@@ -162,7 +162,7 @@ async function deletedJob(id) {
   job.deleted = true;
   await job.save();
   await redis.del("all_jobs");
-  await redis.del(`user_jobs:${created_By}`);
+  await redis.del(`user_jobs:${id}`);
   return true;
 }
 
