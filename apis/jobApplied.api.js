@@ -1,11 +1,14 @@
 const Job = require("../models/job.model");
 const JobApplied = require("../models/jobApplied.model");
 const User = require("../models/user.model");
+const Group = require("../models/groupChat.model");
 const jobAppliedService = require("../services/jobApplied.service");
 const {
   workerNotification,
   contractorNotification,
 } = require("../services/notification.service");
+const { getIo } = require("../socket/socket");
+const { getReceiverSocketId } = require("../socket/socketHandler");
 
 async function ApplyJob(req, res) {
   try {
@@ -24,7 +27,13 @@ async function ApplyJob(req, res) {
     const contractorId = await job.created_By;
     const user = await User.findById(userId);
 
-    await workerNotification(userId, contractorId, jobId, user?.fullname, job?.job_title);
+    await workerNotification(
+      userId,
+      contractorId,
+      jobId,
+      user?.fullname,
+      job?.job_title,
+    );
 
     res.status(201).json({ message: "Job Applied successfully", job: result });
   } catch (error) {
@@ -57,7 +66,7 @@ async function UpdateApplicationStatus(req, res) {
   try {
     const applicationId = req.params.id;
     const contractorId = req.user.id;
-    
+
     const { status } = req.body;
     // update status
     const result = await jobAppliedService.updateApplicationStatus(
@@ -71,17 +80,53 @@ async function UpdateApplicationStatus(req, res) {
     }
     const workerId = application.userId;
     const jobId = application.jobId;
-    
 
     const job = await Job.findById(jobId);
 
-      await contractorNotification({
-        senderId: contractorId,
-        receiverId: workerId,
-        jobId: jobId,
-        type: "update_status",
-        message: `Your application for ${job.job_title || "a job"} has been ${status}`,
+    // login for notification
+    await contractorNotification({
+      senderId: contractorId,
+      receiverId: workerId,
+      jobId: jobId,
+      type: "update_status",
+      message: `Your application for ${job.job_title || "a job"} has been ${status}`,
+    });
+
+    // logic for group create
+    const io = getIo();
+    const workerSocketId = getReceiverSocketId(workerId);
+
+    if (workerSocketId) {
+      io.to(workerSocketId).emit("applicationStatusUpdated", {
+        jobId,
+        status,
       });
+    }
+
+    if (status === "accept") {
+      let group = await Group.findOne({ jobId });
+
+      if (!group) {
+        group = await Group.create({
+          jobId,
+          contractorId,
+          groupName: `${job.job_title}`,
+          members: [contractorId, workerId],
+        });
+      } else {
+        if (!group.members.includes(workerId)) {
+          group.members.push(workerId);
+          await group.save();
+        }
+      }
+
+      if (workerSocketId) {
+        io.to(workerSocketId).emit("addedToGroup", {
+          groupId: group._id,
+          groupName: group.groupName,
+        });
+      }
+    }
 
     res
       .status(200)

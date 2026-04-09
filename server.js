@@ -1,13 +1,13 @@
 const express = require("express");
 const http = require("http");
-const {Server} = require("socket.io");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const redis = require('./config/redis.js');
 const authentication = require("./middleware/authentication.js");
 require("dotenv").config();
 
-const { socketHandler } = require("./socket");
+const { initSocket } = require("./socket/socket.js");
+const { socketHandler } = require("./socket/socketHandler.js");
 
 const app = express();
 app.use(cors());
@@ -21,13 +21,10 @@ mongoose
   .then(() => console.log("DB Connected"))
   .catch((err) => console.log(err));
 
-// socket.io setup
-const io = new Server(server, {
-  cors:{
-    origin: "*",
-  },
-});
+// init socket
+const io = initSocket(server);
 
+// attach handler
 socketHandler(io);
 
 
