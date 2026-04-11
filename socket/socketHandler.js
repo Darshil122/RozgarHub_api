@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Message = require("../models/message.model");
+const cookie = require("cookie");
 
 const onlineUsers = new Map(); // userId -> socketId
 
@@ -7,11 +8,21 @@ const socketHandler = (io) => {
   // JWT Auth
   io.use((socket, next) => {
     try {
-      const token = socket.handshake.headers.cookie;
+      const cookies = cookie.parse(socket.handshake.headers.cookie || "");
+
+      const token = cookies.token;
+
+      if (!token) {
+        return next(new Error("No token"));
+      }
+
       const user = jwt.verify(token, process.env.JWT_SECRET);
+
       socket.user = user;
+
       next();
     } catch (err) {
+      console.log("❌ Socket Auth Error:", err.message);
       next(new Error("Invalid token"));
     }
   });

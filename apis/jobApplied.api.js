@@ -93,7 +93,7 @@ async function UpdateApplicationStatus(req, res) {
     });
 
     // logic for group create
-    const io = getIo();
+    const io = getIo;
     const workerSocketId = getReceiverSocketId(workerId);
 
     if (workerSocketId) {

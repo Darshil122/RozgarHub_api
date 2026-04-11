@@ -44,6 +44,7 @@ socketHandler(io);
   app.use("/api/job", require("./routes/job.route.js"));
   app.use("/api/jobApplied", require("./routes/jobApplied.route.js"));
   app.use("/api/notification", require("./routes/notification.route.js"));
+  app.use("/api", require("./routes/chat.route.js"));
 
 const PORT = process.env.PORT || 3002;
 server.listen(PORT, () => console.log("Server Started!"));
