@@ -7,7 +7,7 @@ const socketHandler = (io) => {
   // JWT Auth
   io.use((socket, next) => {
     try {
-      const token = socket.handshake.auth.token;
+      const token = socket.handshake.headers.cookie;
       const user = jwt.verify(token, process.env.JWT_SECRET);
       socket.user = user;
       next();

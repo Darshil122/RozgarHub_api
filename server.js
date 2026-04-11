@@ -4,14 +4,21 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const redis = require('./config/redis.js');
 const authentication = require("./middleware/authentication.js");
+const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
 const { initSocket } = require("./socket/socket.js");
 const { socketHandler } = require("./socket/socketHandler.js");
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  }),
+);
 app.use(express.json());
+app.use(cookieParser());
 
 const server = http.createServer(app);
 

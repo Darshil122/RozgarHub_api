@@ -2,60 +2,78 @@ const User = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-async function registerUser(userData){
-    const {fullname, contact, email, password, role} = userData;
-    const existUser = await User.findOne({
-      $or: [{ contact }, { email }],
-    });
+async function registerUser(userData) {
+  const { fullname, contact, email, password, role } = userData;
 
-    if (existUser) {
-      if (existUser.email === email) {
-        throw new Error("Email already registered");
-      }
-      if (existUser.contact === contact) {
-        throw new Error("Contact number already registered");
-      }
+  const existUser = await User.findOne({
+    $or: [{ contact }, { email }],
+  });
+
+  if (existUser) {
+    if (existUser.email === email) {
+      throw new Error("Email already registered");
     }
+    if (existUser.contact === contact) {
+      throw new Error("Contact number already registered");
+    }
+  }
 
+  const hashPassword = await bcrypt.hash(password, 10);
 
-    const hashPassword = await bcrypt.hash(password, 10);
+  const newUser = await User.create({
+    fullname,
+    contact,
+    password: hashPassword,
+    email,
+    role,
+  });
 
-    const newUser = await User.create({
-        fullname,
-        contact,
-        password:hashPassword,
-        email,
-        role
-    });
+  const token = jwt.sign(
+    { id: newUser._id, role: newUser.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" },
+  );
 
-    const token = jwt.sign({id: newUser._id, email}, process.env.JWT_SECRET,{
-        expiresIn: "7d",
-    });
-
-    return {
-        token, 
-        newUser: {fullname, contact, email, role}
-    };
+  return {
+    token,
+    user: {
+      _id: newUser._id,
+      fullname,
+      contact,
+      email,
+      role,
+    },
+  };
 }
 
-async function loginUser(email, password){
-const user = await User.findOne({email}).select("+password");
+async function loginUser(email, password) {
+  const user = await User.findOne({ email }).select("+password");
 
-if(!user){
+  if (!user) {
     throw new Error("Invalid Email/Password");
-}
+  }
 
-const isMatch = await bcrypt.compare(password, user.password);
-if(!isMatch){
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
     throw new Error("Password does not match");
-}
+  }
 
-const token = jwt.sign({id: user._id, email}, process.env.JWT_SECRET,{
-    expiresIn:"7d",
-});
+  const token = jwt.sign(
+    { id: user._id, role: user.role }, // ✅ include role
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" },
+  );
 
-return {token, user:{role: user.role}};
-
+  return {
+    token,
+    user: {
+      _id: user._id,
+      fullname: user.fullname,
+      email: user.email,
+      contact: user.contact,
+      role: user.role,
+    },
+  };
 }
 
 module.exports = {
