@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const Message = require("../models/message.model");
 const cookie = require("cookie");
 
-const onlineUsers = new Map(); // userId -> socketId
+const onlineUsers = new Map();
 
 const socketHandler = (io) => {
   // JWT Auth
@@ -18,42 +18,45 @@ const socketHandler = (io) => {
 
       const user = jwt.verify(token, process.env.JWT_SECRET);
 
-      socket.user = user;
+      socket.userId = user.id;
 
       next();
     } catch (err) {
-      console.log("❌ Socket Auth Error:", err.message);
+      console.log("Socket Auth Error:", err.message);
       next(new Error("Invalid token"));
     }
   });
 
   io.on("connection", (socket) => {
-    const userId = socket.user.id;
+    const userId = socket.userId;
 
-    console.log("User connected:", userId);
+    console.log("Socket connected");
 
     // store online user
     onlineUsers.set(userId.toString(), socket.id);
 
     // Join group
     socket.on("joinGroup", (groupId) => {
-      socket.join(groupId);
+      socket.join(groupId.toString());
     });
 
     // Send message
-    socket.on("sendMessage", async ({ groupId, message }) => {
-      const newMessage = await Message.create({
-        groupId,
-        senderId: userId,
-        message,
+    socket.on("sendMessage", async (data) => {
+      let message = await Message.create({
+        groupId: data.groupId,
+        message: data.message,
+        senderId: socket.userId,
       });
 
-      io.to(groupId).emit("receiveMessage", newMessage);
+      // populate sender
+      message = await message.populate("senderId", "fullname");
+
+      io.to(data.groupId.toString()).emit("receiveMessage", message);
     });
 
     // Disconnect
     socket.on("disconnect", () => {
-      console.log("Disconnected:", userId);
+      // console.log("Disconnected:", userId);
       onlineUsers.delete(userId.toString());
     });
   });
