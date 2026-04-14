@@ -14,11 +14,22 @@ async function getMyGroups(userId) {
   return groups;
 }
 
-async function getMessages(groupId){
-
-  const messages = await Message.find({groupId}).populate("senderId", "fullname").sort({ createdAt: 1});
+async function getMessages(groupId) {
+  const messages = await Message.find({ groupId })
+    .populate("senderId", "fullname")
+    .sort({ createdAt: 1 });
 
   return messages;
 }
 
-module.exports = { getMyGroups, getMessages };
+async function getGroupDetails(groupId) {
+  if (!groupId) {
+    throw new Error("Invalid group id");
+  }
+  const groupDetails = await GroupChat.findById(groupId)
+    .select('groupName members')
+    .populate("members", "fullname email role");
+  return groupDetails;
+}
+
+module.exports = { getMyGroups, getMessages, getGroupDetails };
