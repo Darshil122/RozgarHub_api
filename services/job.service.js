@@ -92,9 +92,6 @@ async function getJobById(id) {
 }
 
 async function updatedJob(jobData, id) {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error("Invalid job ID");
-  }
 
   const job = await jobModel.findById(id);
 
@@ -136,33 +133,31 @@ async function updatedJob(jobData, id) {
     { new: true, runValidators: true },
   );
   await redis.del("all_jobs");
-  await redis.del(`user_jobs:${created_By}`);
+  await redis.del(`user_jobs:${job.created_By}`);
 
   return updatedJob;
 }
 
 async function deletedJob(id) {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error("Invalid job ID");
-  }
-
   const job = await jobModel.findOne({
     _id: id,
     deleted: false,
   });
 
-  if (new Date() > new Date(job.job_closing_date)) {
-    throw new Error("Cannot delete job after closing date");
-  }
-
   if (!job) {
     throw new Error("Job not found");
   }
 
+  if (new Date() > new Date(job.job_closing_date)) {
+    throw new Error("Cannot delete job after closing date");
+  }
+
   job.deleted = true;
   await job.save();
+
   await redis.del("all_jobs");
-  await redis.del(`user_jobs:${id}`);
+  await redis.del(`user_jobs:${job.created_By}`);
+
   return true;
 }
 
